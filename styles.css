@@ -154,11 +154,18 @@ input:focus, select:focus {
 }
 
 .activity-item {
-    background: white;
+    background: rgba(255, 255, 255, 0.9); /* Fondo ligero */
     border-radius: var(--border-radius);
-    padding: 1rem;
+    padding: 1.5rem; /* Más espacio interno */
     margin-bottom: 0.75rem;
     box-shadow: var(--box-shadow);
+    transition: var(--transition); /* Para efectos hover */
+}
+
+/* Efecto hover para tarjetas */
+.activity-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .activity-header {
@@ -169,8 +176,9 @@ input:focus, select:focus {
 }
 
 .activity-name {
-    font-size: 1.1rem;
-    font-weight: 500;
+    font-size: 1.2rem; /* Aumentar tamaño de fuente */
+    font-weight: 600; /* Negrita */
+    color: var(--dark-color);
 }
 
 .activity-name.completed {
@@ -191,6 +199,13 @@ input:focus, select:focus {
     border-radius: var(--border-radius);
     cursor: pointer;
     transition: var(--transition);
+    background: var(--primary-color); /* Color del botón */
+    color: white;
+}
+
+/* Estilo para botones de acción */
+.activity-actions button:hover {
+    background: var(--dark-color);
 }
 
 /* Menú lateral */
