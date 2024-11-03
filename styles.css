@@ -1,7 +1,5 @@
-/* Importar fuente */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
-/* Reset y variables */
 :root {
     --primary-color: #007bff;
     --secondary-color: #6c757d;
@@ -23,7 +21,6 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-/* Estilos base */
 body {
     font-family: 'Poppins', sans-serif;
     background-image: url('Fondo1.jpg');
@@ -37,7 +34,6 @@ body {
     flex-direction: column;
 }
 
-/* Contenedor principal */
 .container {
     background-color: rgba(255, 255, 255, 0.95);
     border-radius: var(--border-radius);
@@ -49,7 +45,6 @@ body {
     transition: var(--transition);
 }
 
-/* Encabezados */
 h1 {
     font-size: 1.75rem;
     text-align: center;
@@ -62,7 +57,6 @@ h2 {
     margin-bottom: 1rem;
 }
 
-/* Formulario */
 .activity-form {
     display: flex;
     flex-direction: column;
@@ -84,7 +78,6 @@ h2 {
     }
 }
 
-/* Inputs y Selects */
 input, select {
     width: 100%;
     padding: 0.75rem;
@@ -102,12 +95,11 @@ input:focus, select:focus {
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
-/* Botones */
 .btn-primary, .btn-secondary, .btn-filter, .btn-toggle {
     width: 100%;
     padding: 0.75rem;
     border: none;
-    border-radius: var(--border-radius);
+    border-radius : var(--border-radius);
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
@@ -136,19 +128,6 @@ input:focus, select:focus {
     margin: 1rem 0;
 }
 
-/* Filtros */
-.filters-section {
-    margin: 1rem 0;
-}
-
-.filters {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-}
-
-/* Lista de actividades */
 .activity-list {
     margin-top: 1rem;
 }
@@ -162,7 +141,6 @@ input:focus, select:focus {
     transition: var(--transition); /* Para efectos hover */
 }
 
-/* Efecto hover para tarjetas */
 .activity-item:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
@@ -203,12 +181,10 @@ input:focus, select:focus {
     color: white;
 }
 
-/* Estilo para botones de acción */
 .activity-actions button:hover {
     background: var(--dark-color);
 }
 
-/* Menú lateral */
 .menu-toggle {
     position: fixed;
     top: 1rem;
@@ -249,9 +225,10 @@ input:focus, select:focus {
     left: 0;
 }
 
-/* Calendario */
 .calendar-container {
     padding: 1rem;
+    max-width: 100%;
+    overflow-x: auto; /* Agregado para que el calendario sea responsivo */
 }
 
 .calendar-header {
@@ -282,14 +259,13 @@ input:focus, select:focus {
     cursor: pointer;
     border-radius: 50%;
     font-size: 0.9rem;
+    padding: 0.5rem; /* Agregado para que los días del calendario tengan un poco de espacio */
 }
 
-/* Utilidades */
 .hidden {
     display: none;
 }
 
-/* Animaciones */
 @keyframes slideIn {
     from {
         transform: translateX(-100%);
@@ -310,7 +286,6 @@ input:focus, select:focus {
     }
 }
 
-/* Mejoras táctiles para móvil */
 @media (hover: none) {
     .btn-primary:active,
     .btn-secondary:active,
@@ -320,7 +295,6 @@ input:focus, select:focus {
     }
 }
 
-/* Soporte para pantallas más pequeñas */
 @media (max-width: 360px) {
     .container {
         padding: 1rem;
@@ -332,5 +306,30 @@ input:focus, select:focus {
 
     input, select, button {
         padding: 0.6rem;
+    }
+
+    .calendar-container {
+        padding: 0.5rem;
+    }
+
+    .calendar-days {
+        gap: 0.1rem;
+    }
+
+    .calendar-day {
+        font-size: 0.7rem;
+        padding: 0.3rem;
+    }
+    .activity-reminder {
+        font-size: 0.9rem;
+        color: #666;
+        margin: 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .activity-reminder i {
+        color: var(--warning-color);
     }
 }

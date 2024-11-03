@@ -1,60 +1,30 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007bff">
+    <meta name="description" content="Daily Prompt - Tu organizador diario de tareas">
     <title>Daily Prompt</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192x192.png">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
 </head>
 <body>
-    <!-- Menú hamburguesa mejorado -->
-    <div class="menu-toggle" id="menu-toggle" aria-label="Abrir menú">
-        <i class="fas fa-bars"></i>
-    </div>
-
-    <!-- Sidebar optimizado -->
-    <div class="sidebar" id="sidebar" aria-hidden="true">
-        <div class="sidebar-header">
-            <h2>Calendario</h2>
-            <button class="close-sidebar" id="close-sidebar" aria-label="Cerrar calendario">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="calendar-container">
-            <div class="calendar-header">
-                <button id="prevMonth" aria-label="Mes anterior"><i class="fas fa-chevron-left"></i></button>
-                <h3 id="currentMonth">Mes Año</h3>
-                <button id="nextMonth" aria-label="Mes siguiente"><i class="fas fa-chevron-right"></i></button>
-            </div>
-            <div class="weekdays" role="row">
-                <div>D</div>
-                <div>L</div>
-                <div>M</div>
-                <div>M</div>
-                <div>J</div>
-                <div>V</div>
-                <div>S</div>
-            </div>
-            <div class="calendar-days" id="calendar-days" role="grid">
-                <!-- Días generados dinámicamente -->
-            </div>
-        </div>
-    </div>
-
     <div class="container">
         <h1>Daily Prompt</h1>
         
-        <!-- Formulario optimizado -->
-        <form id="activity-form" class="activity-form" onsubmit="return false;">
+        <form id="activity-form" class="activity-form">
             <div class="form-group">
-                <input type="text" id="activity-name" placeholder="Actividad" required>
+                <input type="text" id="activity-name" placeholder="Nombre de la actividad" required>
             </div>
-            
+
             <div class="form-row">
                 <div class="form-group">
                     <select id="activity-category" required>
-                        <option value="">Categoría</option>
+                        <option value="">Selecciona categoría</option>
                         <option value="trabajo">Trabajo 💼</option>
                         <option value="personal">Personal 😊</option>
                         <option value="estudio">Estudio 📚</option>
@@ -64,10 +34,10 @@
                         <option value="otro">Otro 📌</option>
                     </select>
                 </div>
-                
+
                 <div class="form-group">
                     <select id="activity-priority" required>
-                        <option value="">Prioridad</option>
+                        <option value="">Selecciona prioridad</option>
                         <option value="high">Alta ⚠️</option>
                         <option value="medium">Media ⚡</option>
                         <option value="low">Baja 📌</option>
@@ -79,9 +49,22 @@
                 <div class="form-group">
                     <input type="time" id="activity-time" required>
                 </div>
+
                 <div class="form-group">
                     <input type="date" id="activity-date" required>
                 </div>
+            </div>
+
+            <div class="form-group">
+                <select id="reminder-time" required>
+                    <option value="">Selecciona recordatorio</option>
+                    <option value="5">5 minutos antes</option>
+                    <option value="15">15 minutos antes</option>
+                    <option value="30">30 minutos antes</option>
+                    <option value="60">1 hora antes</option>
+                    <option value="1440">1 día antes</option>
+                    <option value="daily">Diariamente</option>
+                </select>
             </div>
 
             <div class="form-actions">
@@ -90,48 +73,36 @@
             </div>
         </form>
 
-        <!-- Filtros optimizados -->
-        <div class="filters-section">
-            <button id="toggle-filters" class="btn-filter">
-                <i class="fas fa-filter"></i> Filtros
-            </button>
-            
-            <div id="filters-container" class="filters hidden">
-                <select id="filter-category">
-                    <option value="all">Todas las categorías</option>
-                    <option value="trabajo">Trabajo</option>
-                    <option value="personal">Personal</option>
-                    <option value="estudio">Estudio</option>
-                    <option value="ejercicio">Ejercicio</option>
-                    <option value="salud">Salud</option>
-                    <option value="compras">Compras</option>
-                    <option value="otro">Otro</option>
-                </select>
+        <button id="toggle-calendar" class="btn-toggle">Mostrar Calendario</button>
 
-                <select id="filter-priority">
-                    <option value="all">Todas las prioridades</option>
-                    <option value="high">Alta</option>
-                    <option value="medium">Media</option>
-                    <option value="low">Baja</option>
-                </select>
-
-                <button id="toggle-completed" class="btn-filter">
-                    Mostrar Completadas
-                </button>
+        <div id="calendar-container" class="calendar-container hidden">
+            <div class="calendar-header">
+                <button id="prevMonth">&lt;</button>
+                <h3 id="currentMonth"></h3>
+                <button id="nextMonth">&gt;</button>
             </div>
+
+            <div class="weekdays" role="row">
+                <div>D</div>
+                <div>L</div>
+                <div>M</div>
+                <div>M</div>
+                <div>J</div>
+                <div>V</div>
+                <div>S</div>
+            </div>
+
+            <div id="calendar-days" class="calendar-days" role="grid"></div>
         </div>
 
         <button id="toggle-list" class="btn-toggle">Mostrar Actividades</button>
-        
-        <!-- Lista de actividades -->
+
         <div id="activity-list" class="activity-list hidden">
             <h2>Actividades</h2>
-            <ul id="activities">
-                <!-- Actividades generadas dinámicamente -->
-            </ul>
+            <ul id="activities"></ul>
         </div>
     </div>
-    
+
     <script src="script.js"></script>
 </body>
 </html>

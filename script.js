@@ -9,18 +9,31 @@ const CATEGORIES = {
     otro: { icon: '📌', color: '#9EA1D4' }
 };
 
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then((registration) => {
+          console.log('Service Worker registrado con éxito:', registration.scope);
+        })
+        .catch((error) => {
+          console.log('Error al registrar el Service Worker:', error);
+        });
+    });
+  }
 let editingItem = null;
 
 // Event Listeners
 document.getElementById('add-activity').addEventListener('click', addOrUpdateActivity);
 document.getElementById('cancel-edit').addEventListener('click', cancelEdit);
 document.getElementById('toggle-list').addEventListener('click', toggleList);
+document.getElementById('toggle-calendar').addEventListener('click', toggleCalendar);
 
 // Inicialización al cargar la página
 window.onload = () => {
     loadActivities();
     setInterval(removeExpiredActivities, 60000); // Verificar cada minuto
     requestNotificationPermission();
+    setupDailyReminders();
 };
 
 // Función para solicitar permisos de notificación
@@ -66,6 +79,16 @@ function createActivityElement(activity) {
     const listItem = document.createElement('li');
     const categoryInfo = CATEGORIES[activity.category || 'otro'];
     
+    // Función para obtener el texto del recordatorio
+    function getReminderText(reminderTime) {
+        if (!reminderTime) return '';
+        if (reminderTime === 'daily') return 'Diariamente';
+        const time = parseInt(reminderTime);
+        if (time === 1440) return '1 día antes';
+        if (time === 60) return '1 hora antes';
+        return `${time} minutos antes`;
+    }
+    
     listItem.innerHTML = `
         <div class="activity-content" style="border-left: 4px solid ${categoryInfo.color}">
             <div class="activity-header">
@@ -75,6 +98,9 @@ function createActivityElement(activity) {
             </div>
             <div class="activity-name ${activity.completed ? 'completed' : ''}">
                 ${activity.name}
+            </div>
+            <div class="activity-reminder">
+                <i class="fas fa-bell"></i> Recordatorio: ${getReminderText(activity.reminderTime)}
             </div>
             <div class="buttons">
                 <button class="complete-btn" onclick="toggleComplete(this)">
@@ -96,6 +122,7 @@ function addOrUpdateActivity() {
     const date = document.getElementById('activity-date').value;
     const category = document.getElementById('activity-category')?.value || 'otro';
     const priority = document.getElementById('activity-priority')?.value || 'medium';
+    const reminderTime = document.getElementById('reminder-time').value;
 
     if (name && time && date) {
         const activityData = {
@@ -105,20 +132,18 @@ function addOrUpdateActivity() {
             category,
             priority,
             completed: false,
+            reminderTime: reminderTime,
             id: Date.now()
         };
 
         const activities = JSON.parse(localStorage.getItem('activities')) || [];
 
         if (editingItem) {
-            // Actualizar actividad existente
             const index = [...document.getElementById('activities').children].indexOf(editingItem);
             activities[index] = activityData;
         } else {
-            // Agregar nueva actividad
             activities.push(activityData);
-            // Programar notificación
-            scheduleNotification(name, time, date);
+            scheduleNotification(activityData);
         }
 
         localStorage.setItem('activities', JSON.stringify(activities));
@@ -130,26 +155,60 @@ function addOrUpdateActivity() {
 }
 
 // Función para programar notificaciones
-function scheduleNotification(name, time, date) {
-    const activityDateTime = new Date(`${date}T${convertTimeTo24Hour(time)}`);
-    const now = new Date();
-    const timeUntilNotification = activityDateTime - now - 5 * 60 * 1000; // 5 minutos antes
+function scheduleNotification(activity) {
+    const { name, time, date, reminderTime } = activity;
+    if (reminderTime === 'daily') {
+        const [hours, minutes] = time.split(':');
+        const dailyNotificationTime = new Date();
+        dailyNotificationTime.setHours(parseInt(hours));
+        dailyNotificationTime.setMinutes(parseInt(minutes));
+        dailyNotificationTime.setSeconds(0);
+        dailyNotificationTime.setMilliseconds(0);
 
-    if (timeUntilNotification > 0) {
+        if (dailyNotificationTime < new Date()) {
+            dailyNotificationTime.setDate(dailyNotificationTime.getDate() + 1);
+        }
+
+        const timeUntilNotification = dailyNotificationTime - new Date();
+
         setTimeout(() => {
-            showNotification('Recordatorio de Actividad', {
-                body: `En 5 minutos: ${name}`,
-                icon: 'path/to/icon.png' // Opcional: reemplaza con la ruta a un icono
+            showNotification('Recordatorio Diario', {
+                body: `Es hora de: ${name}`,
+                icon: 'path/to/icon.png'
             });
+            scheduleNotification(activity); // Reprogramar para el día siguiente
         }, timeUntilNotification);
+    } else {
+        const activityDateTime = new Date(`${date}T${convertTimeTo24Hour(time)}`);
+        const now = new Date();
+        const timeUntilNotification = activityDateTime - now - reminderTime * 60 * 1000;
+
+        if (timeUntilNotification > 0) {
+            setTimeout(() => {
+                showNotification('Recordatorio de Actividad', {
+                    body: `En ${reminderTime} minutos: ${name}`,
+                    icon: 'path/to/icon.png'
+                });
+            }, timeUntilNotification);
+        }
     }
+}
+
+// Función para configurar recordatorios diarios
+function setupDailyReminders() {
+    const activities = JSON.parse(localStorage.getItem('activities')) || [];
+    activities.forEach(activity => {
+        if (activity.reminderTime === 'daily') {
+            scheduleNotification(activity);
+        }
+    });
 }
 
 // Función para formatear tiempo
 function formatTime(time) {
     const [hours, minutes] = time.split(':');
     const period = hours >= 12 ? 'PM' : 'AM';
-    const formattedHours = (hours % 12) || 12;
+    const formattedHours = ( hours % 12) || 12;
     return `${formattedHours}:${minutes} ${period}`;
 }
 
@@ -179,6 +238,7 @@ function clearForm() {
     if (document.getElementById('activity-priority')) {
         document.getElementById('activity-priority').value = '';
     }
+    document.getElementById('reminder-time').value = '';
     document.getElementById('add-activity').textContent = 'Agregar Actividad';
     document.getElementById('cancel-edit').classList.add('hidden');
     editingItem = null;
@@ -234,8 +294,9 @@ function editActivity(button) {
         document.getElementById('activity-category').value = activity.category || 'otro';
     }
     if (document.getElementById('activity-priority')) {
-        document.getElementById('activity-priority').value = activity.priority || 'medium';
+        document.getElementById('activity-priority').value = activity.priority || ' medium';
     }
+    document.getElementById('reminder-time').value = activity.reminderTime || '';
 
     editingItem = listItem;
     document.getElementById('add-activity').textContent = 'Actualizar Actividad';
@@ -283,16 +344,24 @@ function removeExpiredActivities() {
     loadActivities();
 }
 
+// Función para mostrar u ocultar el calend ario
+function toggleCalendar() {
+    const calendarContainer = document.getElementById('calendar-container');
+    if (calendarContainer.classList.contains('hidden')) {
+        calendarContainer.classList.remove('hidden');
+        document.getElementById('toggle-calendar').textContent = 'Ocultar Calendario';
+    } else {
+        calendarContainer.classList.add('hidden');
+        document.getElementById('toggle-calendar').textContent = 'Mostrar Calendario';
+    }
+}
+
 // Solicitar permiso para notificaciones al cargar el script
 requestNotificationPermission();
 
-// Funcionalidad del menú y calendario
+// Funcionalidad del calendario
 document.addEventListener('DOMContentLoaded', () => {
     // Referencias a elementos del DOM
-    const menuToggle = document.getElementById('menu-toggle');
-    const sidebar = document.getElementById('sidebar');
-    const closeSidebar = document.getElementById('close-sidebar');
-    const container = document.querySelector('.container');
     const prevMonth = document.getElementById('prevMonth');
     const nextMonth = document.getElementById('nextMonth');
     const currentMonthElement = document.getElementById('currentMonth');
@@ -301,25 +370,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Variables del calendario
     let currentDate = new Date();
     let selectedDate = new Date();
-
-    // Funciones del menú
-    menuToggle.addEventListener('click', () => {
-        sidebar.classList.add('active');
-        container.classList.add('shifted');
-    });
-
-    closeSidebar.addEventListener('click', () => {
-        sidebar.classList.remove('active');
-        container.classList.remove('shifted');
-    });
-
-    // Cerrar al hacer clic fuera del menú
-    document.addEventListener('click', (e) => {
-        if (!sidebar.contains(e.target) && !menuToggle.contains(e.target) && sidebar.classList.contains('active')) {
-            sidebar.classList.remove('active');
-            container.classList.remove('shifted');
-        }
-    });
 
     // Funciones del calendario
     function updateCalendar() {
@@ -353,16 +403,18 @@ document.addEventListener('DOMContentLoaded', () => {
             dayElement.className = 'calendar-day';
             dayElement.textContent = day;
             
-            // Formatear la fecha actual para comparar con las actividades
-            const currentDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            // Crear una fecha en formato YYYY-MM-DD para comparaciones
+            const currentDateStr = new Date(year, month, day).toISOString().split('T')[0];
             
             // Marcar días con actividades
             if (activityDates.has(currentDateStr)) {
                 dayElement.classList.add('has-activity');
+                dayElement.style.color = 'red';  // Marcar en rojo
             }
             
             // Marcar el día actual
-            if (new Date().toDateString() === new Date(year, month, day).toDateString()) {
+            const today = new Date();
+            if (today.getFullYear() === year && today.getMonth() === month && today.getDate() === day) {
                 dayElement.classList.add('today');
             }
             
@@ -371,6 +423,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const selectedActivities = activities.filter(activity => activity.date === currentDateStr);
                 if (selectedActivities.length > 0) {
                     showActivitiesForDate(selectedActivities, currentDateStr);
+                } else {
+                    alert("No hay actividades para esta fecha .");
                 }
             });
             
@@ -380,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Mostrar actividades para una fecha específica
     function showActivitiesForDate(activities, date) {
-        const formattedDate = new Date(date).toLocaleDateString('es', {
+        const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('es', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -407,7 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Inicializar calendario
-    updateCalendar();
+    updateCalendar ();
 
     // Actualizar calendario cuando se añadan o modifiquen actividades
     const originalAddOrUpdateActivity = window.addOrUpdateActivity;
@@ -415,4 +469,5 @@ document.addEventListener('DOMContentLoaded', () => {
         originalAddOrUpdateActivity.apply(this, arguments);
         updateCalendar();
     };
+    
 });
